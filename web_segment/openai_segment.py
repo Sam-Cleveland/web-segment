@@ -1,6 +1,7 @@
 import time
 import json
 import sys
+import logging
 
 from openai import OpenAI
 
@@ -40,13 +41,23 @@ def segment_variables(jsonFile):
     if run.status != 'completed':
         raise Exception('OpenAI Run failed with status: {}'.format(run.status))
     
-    thread_messages = client.beta.threads.messages.list(THREAD_ID_2)
-    message = thread_messages.data[0].content[0].text.value
-    segmentation_variables = json.loads(message[message.find('{'):message.rfind('}')+1])
-
     client.files.delete(file.id)
 
-    return segmentation_variables
+    thread_messages = client.beta.threads.messages.list(THREAD_ID_2)
+    message = thread_messages.data[0].content[0].text.value
+    try:
+        message = message[message.find('{'):message.rfind('}')+1]
+        segmentation_variables = json.loads()
+        return segmentation_variables
+    except:
+        logging.info('OpenAI response did not match json: ' + message)
+        return {
+            'businessName': None,
+            'language': None,
+            'areaOfFocus': None,
+            'accountType': None,
+            'location': None
+        }
 
 if __name__ == '__main__':
     with open(sys.argv[1], 'r') as file:

@@ -161,3 +161,5 @@ cython_debug/
 
 misc/
 logs/
+.DS_Store
+output.json

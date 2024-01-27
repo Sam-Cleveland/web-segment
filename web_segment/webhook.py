@@ -36,7 +36,7 @@ def webhook():
         
         # Start site segmentation in a new thread
         filename = 'logs/' + urlsplit(url).netloc + datetime.now().strftime('_%Y-%m-%d_%H-%M-%S') + '.log'
-        logging.basicConfig(filename=filename, format='%(asctime)s - %(message)s')
+        logging.basicConfig(level=logging.INFO, filename=filename, format='%(asctime)s - %(message)s')
         thread = Thread(target=site_segmentation.main, args=(url, accountId, deep))
         thread.start()
         
