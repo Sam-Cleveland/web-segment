@@ -4,9 +4,9 @@ import json
 import requests
 import logging
 
-import site_scraper
-import openai_segment
-import manual_parse
+import web_segment.site_scraper as site_scraper
+import web_segment.openai_segment as openai_segment
+import web_segment.manual_parse as manual_parse
 
 def main(url, accountId, deep):
     # Initialize output object
@@ -115,21 +115,18 @@ def main(url, accountId, deep):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
-    deep = True
-    if len(sys.argv) < 3:
-        print('Usage: python site_segmentation.py <url> <accountId> <deep|basic>')
+    if len(sys.argv) < 2 or sys.argv[1] == 'help':
+        print('Usage: python web-segment/site_segmentation.py <url> [basic or nothing]')
         sys.exit(1)
-    if len(sys.argv) >= 4:
-        deep = sys.argv[3] == 'deep';
     url = sys.argv[1]
-    accountId = sys.argv[2]
-    site_scrape = main(url, accountId, deep)
+    deep = not (sys.argv[2].lower() == 'basic') if len(sys.argv) > 2 else True
+    
+    site_scrape = main(url, None, deep)
+    
+    # Write output to file
+    filename = 'output/' + site_scrape['url'] + '.json'
+    with open(filename, 'w') as f:
+        f.write(json.dumps(site_scrape, indent=2))
 
-    # Connect to CRM / Next steps
-    logging.info('Sending output to Zoho')
-    ZOHO_API_URL = 'https://www.zohoapis.com/crm/v2/functions/url_scrape_results/actions/execute?auth_type=apikey&zapikey=REDACTED_ZOHO_KEY'
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    data = site_scrape
-    response = requests.post(ZOHO_API_URL, headers=headers, data=json.dumps(data))
+    # Print output to console
+    print(json.dumps(site_scrape, indent=2))

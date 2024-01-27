@@ -199,7 +199,7 @@ def scrape_site(url: str, deep: bool) -> dict:
 			output['hasSitemap'] = False
 
 			# Scrape links to get workaround sitemap
-			sitemap = scrape_links(URL)
+			sitemap = scrape_links(url)
 		# Website has a sitemap
 		else:
 			output['hasSitemap'] = True

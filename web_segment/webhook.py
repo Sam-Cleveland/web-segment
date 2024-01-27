@@ -1,11 +1,12 @@
 import logging
 import os
+import sys
 from flask import Flask, request
 from urllib.parse import urlsplit
 from threading import Thread
 from datetime import datetime
 
-import site_segmentation
+import web_segment.site_segmentation as site_segmentation
 
 app = Flask(__name__)
 
@@ -44,4 +45,13 @@ def webhook():
         return 'Invalid request', 400
 
 if __name__ == '__main__':
-    app.run(host='66.29.135.92', port=80, debug=True)
+    # # get IP and port from python arguments
+    # print(len(sys.argv))
+    # if len(sys.argv) > 1 and sys.argv[1] == 'help':
+    #     print('Usage: python web-segment/webhook.py [port=5000] [host=127.0.0.1] [debug or nothing]')
+    #     sys.exit(0)
+    # port = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
+    # host = sys.argv[2] if len(sys.argv) > 2 else '127.0.0.1'
+    # debug = sys.argv[3].lower() == 'debug' if len(sys.argv) > 3 else False
+    # app.run(host=host, port=port, debug=debug)
+    app.run(host='127.0.0.1', port=80, debug=False)

@@ -1,6 +1,6 @@
 import re
 import sys
-import site_scraper
+import web_segment.site_scraper as site_scraper
 import logging
 
 def find_emails(text):
