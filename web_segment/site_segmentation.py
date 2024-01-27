@@ -112,6 +112,12 @@ def main(url, accountId, deep):
         # file = open(filename, 'w')
         # file.write(json.dumps(site_scrape_data, indent=2))
 
+        # Send output to Zoho
+        logging.info('Sending output to Zoho...')
+        ZOHO_API_URL = 'https://www.zohoapis.com/crm/v2/functions/url_scrape_results/actions/execute?auth_type=apikey&zapikey=REDACTED_ZOHO_KEY'
+        response = requests.post(ZOHO_API_URL, json=site_scrape_data)
+        logging.info('Sent output to Zoho')
+
         return site_scrape_data
     except Exception as e:
         logging.error('Error: ' + str(e))
