@@ -63,6 +63,7 @@ def main(url, accountId, deep):
         }
         logging.info('Getting info via PageSpeed API...')
         response = requests.get(PAGESPEED_API_URL, params=params)
+        logging.log('GET ' + response.url)
         data = response.json()
         logging.info('Got info via PageSpeed API')
 
@@ -116,6 +117,7 @@ def main(url, accountId, deep):
         logging.info('Sending output to Zoho...')
         ZOHO_API_URL = 'https://www.zohoapis.com/crm/v2/functions/url_scrape_results/actions/execute?auth_type=apikey&zapikey=REDACTED_ZOHO_KEY'
         response = requests.post(ZOHO_API_URL, json=site_scrape_data)
+        logging.info('POST ' + response.url)
         logging.info('Sent output to Zoho')
 
         return site_scrape_data

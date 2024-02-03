@@ -1,6 +1,7 @@
 import sys
 import logging
 import requests
+import json
 from urllib.parse import urlsplit
 from datetime import datetime
 from dateutil.parser import parse as parse_date
@@ -31,6 +32,7 @@ def get_html(url):
 		raise Exception('Error loading page ' + url + response.text)
 	if response.url[0:5] == 'https':
 		output['HTTPS'] = True
+	logging.info('GET ' + url)
 	output['html'] = response.text
 	return output
 
@@ -86,7 +88,6 @@ def extract_sitemap(home_url: str):
 		sitemap_output = parse_sitemap(html)
 		output['date'] = sitemap_output['date']
 		for sitemap in sitemap_output['sitemap']:
-			logging.info(sitemap)
 			sub_response = requests.get(sitemap, headers=HEADERS);
 			if sub_response.status_code != 200:
 				logging.info('Error loading sitemap ' + sitemap)
@@ -236,4 +237,7 @@ if __name__ == '__main__':
 	if len(sys.argv) >= 3 and (sys.argv[2] == 'basic'):
 		depp = False
 	
-	print(scrape_site(URL, deep)['lastModified'])
+	scrape = scrape_site(URL, deep)
+	print(scrape['lastModified'])
+	with open('output.json', 'w') as f:
+		f.write(json.dumps(scrape, indent=2))
