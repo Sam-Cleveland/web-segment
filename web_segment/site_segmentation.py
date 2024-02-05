@@ -63,7 +63,7 @@ def main(url, accountId, deep):
         }
         logging.info('Getting info via PageSpeed API...')
         response = requests.get(PAGESPEED_API_URL, params=params)
-        logging.log('GET ' + response.url)
+        logging.info('GET ' + response.url)
         data = response.json()
         logging.info('Got info via PageSpeed API')
 
