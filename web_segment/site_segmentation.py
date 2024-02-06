@@ -9,36 +9,36 @@ import web_segment.openai_segment as openai_segment
 import web_segment.manual_parse as manual_parse
 
 def main(url, accountId, deep):
+    # Initialize output object
+    site_scrape_data = {
+        'status': 'failure',
+        'url': url,
+        'accountId': accountId,
+        'contact_info':{
+            'emails': None,
+            'phoneNumbers': None,
+            'socialMediaLinks': None,
+        },
+        'segmentation':{
+            'businessName': None,
+            'areaOfFocus': None,
+            'accountType': None,
+            'location': None,
+        },
+        'site_analysis':{
+            'language': None,
+            'hasSitemap': None,
+            'lastModified': None,
+            'performance': None,
+            'accessibility': None,
+            'best_practices': None,
+            'seo': None,
+        },
+        'tech_analysis':{
+            'HTTPS': None,
+        }
+    };
     try:
-        # Initialize output object
-        site_scrape_data = {
-            'url': url,
-            'accountId': accountId,
-            'contact_info':{
-                'emails': None,
-                'phoneNumbers': None,
-                'socialMediaLinks': None,
-            },
-            'segmentation':{
-                'businessName': None,
-                'areaOfFocus': None,
-                'accountType': None,
-                'location': None,
-            },
-            'site_analysis':{
-                'language': None,
-                'hasSitemap': None,
-                'lastModified': None,
-                'performance': None,
-                'accessibility': None,
-                'best_practices': None,
-                'seo': None,
-            },
-            'tech_analysis':{
-                'HTTPS': None,
-            }
-        };
-
         # Scrape text from web pages
         logging.info('Scraping ' + url + ' ...')
         # Site scrape keys: mainPageText, hasSitemap, lastModified, pages, HTTPS
@@ -113,17 +113,17 @@ def main(url, accountId, deep):
         # file = open(filename, 'w')
         # file.write(json.dumps(site_scrape_data, indent=2))
 
-        # Send output to Zoho
-        logging.info('Sending output to Zoho...')
-        ZOHO_API_URL = 'https://www.zohoapis.com/crm/v2/functions/url_scrape_results/actions/execute?auth_type=apikey&zapikey=REDACTED_ZOHO_KEY'
-        response = requests.post(ZOHO_API_URL, json=site_scrape_data)
-        logging.info('POST ' + response.url)
-        logging.info('Sent output to Zoho')
-
-        return site_scrape_data
+        site_scrape_data['status'] = 'success'
     except Exception as e:
         logging.error('Error: ' + str(e))
         raise e
+    
+    # Send output to Zoho
+    logging.info('Sending output to Zoho...')
+    ZOHO_API_URL = 'https://www.zohoapis.com/crm/v2/functions/url_scrape_results/actions/execute?auth_type=apikey&zapikey=REDACTED_ZOHO_KEY'
+    response = requests.post(ZOHO_API_URL, json=site_scrape_data)
+    logging.info('POST ' + response.url)
+    logging.info('Sent output to Zoho')
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
