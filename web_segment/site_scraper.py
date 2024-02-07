@@ -122,7 +122,10 @@ def parse_sitemap(xml: str):
 	for tag in parse.find_all('loc'):
 		output['sitemap'].append(tag.text.strip())
 	for tag in parse.find_all('lastmod'):
-		dt = parse_date(tag.text.strip())
+		try:
+			dt = parse_date(tag.text.strip())
+		except ValueError:
+			continue
 		if dt.tzinfo is not None:
 			dt = dt.replace(tzinfo=None)
 		if dt > date:
