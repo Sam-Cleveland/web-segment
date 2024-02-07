@@ -116,7 +116,6 @@ def main(url, accountId, deep):
         site_scrape_data['status'] = 'success'
     except Exception as e:
         logging.error('Error: ' + str(e))
-        raise e
     
     # Send output to Zoho
     logging.info('Sending output to Zoho...')
