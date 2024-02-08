@@ -4,9 +4,14 @@ import json
 import requests
 import logging
 
-import web_segment.site_scraper as site_scraper
-import web_segment.openai_segment as openai_segment
-import web_segment.manual_parse as manual_parse
+try:
+    import web_segment.site_scraper as site_scraper
+    import web_segment.openai_segment as openai_segment
+    import web_segment.manual_parse as manual_parse
+except ModuleNotFoundError:
+    import site_scraper
+    import openai_segment
+    import manual_parse
 
 def main(url, accountId, deep):
     # Initialize output object

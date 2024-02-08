@@ -1,7 +1,11 @@
 import re
 import sys
-import web_segment.site_scraper as site_scraper
 import logging
+
+try:
+    import web_segment.site_scraper as site_scraper
+except ModuleNotFoundError:
+    import site_scraper
 
 def find_emails(text):
     regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'

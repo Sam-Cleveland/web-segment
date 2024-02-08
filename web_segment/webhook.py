@@ -6,7 +6,10 @@ from urllib.parse import urlsplit
 from threading import Thread
 from datetime import datetime
 
-import web_segment.site_segmentation as site_segmentation
+try:
+    import web_segment.site_segmentation as site_segmentation
+except ModuleNotFoundError:
+    import site_segmentation
 
 app = Flask(__name__)
 
