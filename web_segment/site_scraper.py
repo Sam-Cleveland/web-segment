@@ -158,6 +158,22 @@ def scrape_links(home_url: str) -> list:
 			urls.append('https://' + hostname + a['href'])
 	return urls
 
+def get_pages(url: str):
+	"""
+	This function returns a list of all the pages on the given site.
+	
+	Parameters:
+	url (str): The URL of the site to scrape.
+
+	Returns
+	"""
+	sitemap = extract_sitemap(url)
+	if len(sitemap['urls']) == 0:
+		sitemap['hasSitemap'] = False
+	else:
+		sitemap['hasSitemap'] = True
+	sitemap['urls'].extend(scrape_links(url))
+	return sitemap
 
 def scrape_site(url: str, deep: bool) -> dict:
 	"""
@@ -192,22 +208,16 @@ def scrape_site(url: str, deep: bool) -> dict:
 	text = load['text']
 	output['HTTPS'] = load['HTTPS']
 	output['mainPageText'] = text
-	sitemap_output = extract_sitemap(url)
+	sitemap_output = get_pages(url)
+
+
+	output['hasSitemap'] = sitemap_output['hasSitemap']
+	if sitemap_output['date'] is not None:
+		output['lastModified'] = sitemap_output['date']
 
 	# Deep scrape
 	if deep:
 		sitemap = sitemap_output['urls']
-
-		# Website does not have sitemap
-		if len(sitemap) == 0:
-			output['hasSitemap'] = False
-
-			# Scrape links to get workaround sitemap
-			sitemap = scrape_links(url)
-		# Website has a sitemap
-		else:
-			output['hasSitemap'] = True
-			output['lastModified'] = sitemap_output['date']
 
 		# Scrape all pages
 		output['pages'] = {}
@@ -216,14 +226,6 @@ def scrape_site(url: str, deep: bool) -> dict:
 			if (page == url):
 				continue
 			output['pages'][page] = page_text
-	# Basic scrape
-	else:
-		# Set `hasSitemap` according to whether or not sitemap was found
-		if len(sitemap_output['urls']) == 0:
-			output['hasSitemap'] = False
-		else:
-			output['hasSitemap'] = True
-			output['lastModified'] = sitemap_output['date']
 	return output
 
 if __name__ == '__main__':
