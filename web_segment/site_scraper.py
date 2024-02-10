@@ -222,7 +222,11 @@ def scrape_site(url: str, deep: bool) -> dict:
 		# Scrape all pages
 		output['pages'] = {}
 		for page in sitemap:
-			page_text = get_text(page)['text']
+			try:
+				page_text = get_text(page)['text']
+			except:
+				logging.info('Error loading page ' + page)
+				continue
 			if (page == url):
 				continue
 			output['pages'][page] = page_text
