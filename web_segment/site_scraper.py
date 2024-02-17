@@ -2,13 +2,14 @@ import sys
 import logging
 import requests
 import json
-from urllib.parse import urlsplit
+from urllib.parse import urlparse, urlsplit
 from datetime import datetime
 from dateutil.parser import parse as parse_date
 
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
+KEYWORDS = ['home', 'about', 'contact', 'learn', 'importantpage=true']
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
 
@@ -28,15 +29,15 @@ def get_html(url):
 	}
 	response = requests.get(url, headers=HEADERS)
 	if response.status_code != 200:
-		logging.info('Error loading page ' + url + response.text)
-		raise Exception('Error loading page ' + url + response.text)
+		logging.info('Error loading page ' + url + ' with status code ' + str(response.status_code))
+		raise Exception('Error loading page ' + url + ' with status code ' + str(response.status_code))
 	if response.url[0:5] == 'https':
 		output['HTTPS'] = True
 	logging.info('GET ' + url)
 	output['html'] = response.text
 	return output
 
-def get_text(page_url: str) -> str:
+def get_text(page_url: str) -> str: 
 	"""
 	This function scrapes the given page and uses the BeautifulSoup library to parse all text elements from the html and concatenate them into a single string.
 	
@@ -113,7 +114,7 @@ def parse_sitemap(xml: str):
 	Returns:
 	dict: A dictionary containing `date` and `sitemap` keys. The `date` key contains the date the sitemap was last modified. The `sitemap` key contains a list of URLs found in the sitemap.
 	"""
-	parse = BeautifulSoup(xml, 'lxml')
+	parse = BeautifulSoup(xml, 'lxml-xml')
 	output = {
 		'date': None,
 		'sitemap': [],
@@ -147,15 +148,18 @@ def scrape_links(home_url: str) -> list:
 	html = get_html(home_url)['html']
 
 	hostname = urlsplit(home_url).hostname
-	parse = BeautifulSoup(html, features='html.parser')
+	parse = BeautifulSoup(html, 'lxml')
 	urls = []
 	for a in parse.find_all('a'):
-		if not a.has_attr('href'):
+		if not a.has_attr('href') or a['href'] == '':
 			continue
 		if hostname in a['href']:
 			urls.append(a['href'])
 		elif a['href'][0] == '/':
 			urls.append('https://' + hostname + a['href'])
+		# If link text contains any of the keywords, mark it as important
+		if any(keyword in a.get_text().lower() for keyword in KEYWORDS):
+			urls[-1] += '?importantpage=true'
 	return urls
 
 def get_pages(url: str):
@@ -168,12 +172,24 @@ def get_pages(url: str):
 	Returns
 	"""
 	sitemap = extract_sitemap(url)
+	hostname = urlsplit(url).hostname
 	if len(sitemap['urls']) == 0:
 		sitemap['hasSitemap'] = False
 	else:
 		sitemap['hasSitemap'] = True
 	sitemap['urls'].extend(scrape_links(url))
+	sitemap['urls'] = [url.strip() for url in sitemap['urls'] if hostname in url]
+	sitemap['urls'] = [normalize_url(url) for url in sitemap['urls']]
+	sitemap['urls'] = list(set(sitemap['urls']))
 	return sitemap
+
+def normalize_url(url):
+    parsed = urlparse(url)
+    scheme = parsed.scheme or 'http'
+    netloc = parsed.netloc or parsed.path
+    if netloc.startswith('www.'):
+        netloc = netloc[4:]
+    return scheme + '://' + netloc
 
 def scrape_site(url: str, deep: bool) -> dict:
 	"""
@@ -186,7 +202,6 @@ def scrape_site(url: str, deep: bool) -> dict:
     Returns:
     dict: An object containing information about the site matching the following format:
 	{
-		'mainPageText' : str,
 		'hasSitemap': bool,
 		'lastModified' : str (yyyy-mm-dd),
 		'pages' : dict,
@@ -195,19 +210,19 @@ def scrape_site(url: str, deep: bool) -> dict:
 	"""
 	# Initialize output object
 	output = {
-		'mainPageText' : None,
+		'url': None,
 		'hasSitemap': None,
 		'lastModified' : None,
-		'pages' : None,
+		'pages' : {},
 		'HTTPS' : False,
 	}
 
 	# Scrape main page
 	url = 'https://' + urlsplit(url).netloc
-	load = get_text(url)
-	text = load['text']
+	output['url'] = url
+	load = get_html(url)
+	output['pages'][url] = BeautifulSoup(load['html'], 'lxml')
 	output['HTTPS'] = load['HTTPS']
-	output['mainPageText'] = text
 	sitemap_output = get_pages(url)
 
 
@@ -218,18 +233,18 @@ def scrape_site(url: str, deep: bool) -> dict:
 	# Deep scrape
 	if deep:
 		sitemap = sitemap_output['urls']
+		sitemap = list(set(sitemap))
 
 		# Scrape all pages
-		output['pages'] = {}
 		for page in sitemap:
 			try:
-				page_text = get_text(page)['text']
+				page_parse = BeautifulSoup(get_html(page)['html'], 'lxml')
 			except:
 				logging.info('Error loading page ' + page)
 				continue
 			if (page == url):
 				continue
-			output['pages'][page] = page_text
+			output['pages'][page] = page_parse
 	return output
 
 if __name__ == '__main__':
