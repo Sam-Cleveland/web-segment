@@ -23,9 +23,12 @@ def webhook():
         return 'Invalid API key', 401
     if request.method == 'POST':
         # Get all variables from request
-        deep = False if request.json.get('deep') is None else True
         url = request.json.get('url')
         accountId = request.json.get('accountId')
+        use_pagespeed = request.json.get('use_pagespeed') if request.json.get('use_pagespeed') is not None else True
+        use_openai = request.json.get('use_openai') if request.json.get('use_openai') is not None else True
+        openai_model = request.json.get('openai_model') if request.json.get('openai_model') is not None else 'gpt-3.5-turbo'
+        save_output = request.json.get('save_output') if request.json.get('save_output') is not None else False
 
         # If any variables are missing, return error
         if url is None:
@@ -42,7 +45,7 @@ def webhook():
         logging.basicConfig(level=logging.INFO, filename=filename, format='%(asctime)s - %(message)s')
         # Log IP location
         logging.info('Request recieved from IP: ' + request.remote_addr)
-        thread = Thread(target=site_segmentation.main, args=(url, accountId, deep))
+        thread = Thread(target=site_segmentation.main, args=(url, accountId), kwargs={'use_pagespeed': use_pagespeed, 'use_openai': use_openai, 'openai_model': openai_model, 'save_output': save_output})
         thread.start()
         
         return 'success', 200
