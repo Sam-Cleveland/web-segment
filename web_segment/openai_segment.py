@@ -136,7 +136,13 @@ def summarize_scrape(scrape: str) -> str:
         run = client.beta.threads.runs.retrieve(
             thread_id=thread.id,
             run_id=run.id)
-    assistant_tokens_usage += run.usage['total_tokens']
+    try:
+        assistant_tokens_usage += run.usage['total_tokens']
+    except TypeError:
+        try:
+            assistant_tokens_usage += run.usage.total_tokens
+        except AttributeError:
+            logging.info('Assistant usage not found in run: ' + str(run))
     assistant_prompt_count += 1
     # Throw exception if run failed
     if run.status != 'completed':

@@ -29,6 +29,7 @@ def webhook():
         use_openai = request.json.get('use_openai') if request.json.get('use_openai') is not None else True
         openai_model = request.json.get('openai_model') if request.json.get('openai_model') is not None else 'gpt-3.5-turbo'
         save_output = request.json.get('save_output') if request.json.get('save_output') is not None else False
+        send_to_zoho = request.json.get('send_to_zoho') if request.json.get('send_to_zoho') is not None else True
 
         # If any variables are missing, return error
         if url is None:
@@ -45,7 +46,7 @@ def webhook():
         logging.basicConfig(level=logging.INFO, filename=filename, format='%(asctime)s - %(message)s')
         # Log IP location
         logging.info('Request recieved from IP: ' + request.remote_addr)
-        thread = Thread(target=site_segmentation.main, args=(url, accountId), kwargs={'use_pagespeed': use_pagespeed, 'use_openai': use_openai, 'openai_model': openai_model, 'save_output': save_output})
+        thread = Thread(target=site_segmentation.main, args=(url, accountId), kwargs={'use_pagespeed': use_pagespeed, 'use_openai': use_openai, 'openai_model': openai_model, 'save_output': save_output, 'send_to_zoho': send_to_zoho})
         thread.start()
         
         return 'success', 200
