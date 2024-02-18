@@ -151,7 +151,7 @@ def main(url, accountId, use_pagespeed=True, use_openai=True, openai_model='gpt-
         response = requests.post(ZOHO_API_URL, json=site_scrape_data)
         logging.info('POST ' + response.url)
         logging.info('Sent output to Zoho:')
-    logging.info(json.dumps(response.json(), indent=2))
+    logging.info(json.dumps(site_scrape_data, indent=2))
 
     return site_scrape_data
 
