@@ -20,7 +20,7 @@ except ModuleNotFoundError:
     from site_scraper import KEYWORDS
 
 
-def main(url, accountId, use_pagespeed=True, use_openai=True, openai_model='gpt-3.5-turbo', save_output=False):
+def main(url, accountId, use_pagespeed=True, use_openai=True, openai_model='gpt-3.5-turbo', save_output=False, send_to_zoho=True):
     # Initialize output object
     site_scrape_data = {
         'status': 'success',
@@ -144,12 +144,15 @@ def main(url, accountId, use_pagespeed=True, use_openai=True, openai_model='gpt-
         logging.error(traceback.format_exc())
         site_scrape_data['error'] = str(e)
     
-    # Send output to Zoho
-    # logging.info('Sending output to Zoho...')
-    # ZOHO_API_URL = 'https://www.zohoapis.com/crm/v2/functions/url_scrape_results/actions/execute?auth_type=apikey&zapikey=REDACTED_ZOHO_KEY'
-    # response = requests.post(ZOHO_API_URL, json=site_scrape_data)
-    # logging.info('POST ' + response.url)
-    # logging.info('Sent output to Zoho')
+    if send_to_zoho:
+        # Send output to Zoho
+        logging.info('Sending output to Zoho...')
+        ZOHO_API_URL = 'https://www.zohoapis.com/crm/v2/functions/url_scrape_results/actions/execute?auth_type=apikey&zapikey=REDACTED_ZOHO_KEY'
+        response = requests.post(ZOHO_API_URL, json=site_scrape_data)
+        logging.info('POST ' + response.url)
+        logging.info('Sent output to Zoho:')
+    logging.info(json.dumps(response.json(), indent=2))
+
     return site_scrape_data
 
 if __name__ == '__main__':

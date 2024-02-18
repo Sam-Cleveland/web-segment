@@ -163,3 +163,4 @@ misc/
 logs/
 .DS_Store
 output.json
+output/
