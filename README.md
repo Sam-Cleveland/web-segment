@@ -14,7 +14,7 @@ https://example.com  ──▶  scrape  ──▶  regex contacts  ──▶  LL
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![OpenAI](https://img.shields.io/badge/OpenAI-API-412991?logo=openai&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-webhook-000000?logo=flask&logoColor=white)
-![Status](https://img.shields.io/badge/status-archived%20internship%20project-lightgrey)
+![Built](https://img.shields.io/badge/built-2024%2C%20internship%20work%20sample-lightgrey)
 
 ---
 
