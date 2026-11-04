@@ -12,9 +12,16 @@ chat_prompt_count = 0
 assistant_tokens_usage = 0;
 assistant_prompt_count = 0;
 
-OPENAI_API_KEY_COACHIQ='REDACTED_OPENAI_KEY'
-MODEL='gpt-3.5-turbo'
-RELOAD_TIME_DELAY=5
+MODEL = os.environ.get('OPENAI_MODEL', 'gpt-3.5-turbo')
+RELOAD_TIME_DELAY = 5
+
+# Optional. Summarizer assistant used by summarize_scrape(). When unset, the summarizer
+# falls back to a plain chat completion so the pipeline still runs end to end.
+WEB_SCRAPE_SUMMARIZER_ASSISTANT_ID = os.environ.get('OPENAI_SUMMARIZER_ASSISTANT_ID', '')
+
+# Chat completions accept far less text than an assistant file upload, so the fallback
+# path truncates the page text before sending it.
+FALLBACK_CHAR_LIMIT = 12000
 
 # System prompts
 PAGE_SELECTOR_SYS_PROMPT = '''
@@ -84,11 +91,21 @@ What product/service do they sell/provide?
 
 If one of these questions does not have a clear answer or does not apply to the business, state so. Do not guess answers if they are not clear.
 '''
-WEB_SCRAPE_SUMMARIZER_ASSISTANT_ID = 'REDACTED_ASSISTANT_ID'
-
 AREA_OF_FOCUS = ['Soccer', 'Skateboarding', 'Running', 'Rugby', 'Recruiting', 'Racquetball', 'Pickleball', 'Physical Therapy',  'Personal Training', 'Nutrition', 'Non-Athletic', 'Multi-Disciplinary', 'Movement', 'MMA', 'Mental Performance', 'Lacrosse', 'Judo', 'Ice Skating', 'Hockey',  'Gymnastics', 'Golf', 'Football', 'Foot Volley', 'Flag Football', 'Fitness', 'Field Hockey', 'Equestrian', 'Cycling', 'Crossfit', 'Cricket', 'Brazilian Jiu Jitsu', 'Basketball', 'Baseball', 'Barre', 'Badminton', 'Paddle', 'Australian Football', 'Table Tennis', 'Yoga', 'Wrestling', 'Wellness', 'Weightlifting', 'Volleyball', 'Track & Field', 'Tennis', 'Tai Chi', 'Swimming/Diving', 'Strength & Conditioning', 'Squash', 'Sprinting', 'Sports Performance', 'Softball']
 
-client = OpenAI(api_key=OPENAI_API_KEY_COACHIQ)
+class _LazyOpenAIClient:
+    """Builds the client on first use so the module imports without an API key present."""
+
+    def __init__(self):
+        self._client = None
+
+    def __getattr__(self, name):
+        if self._client is None:
+            self._client = OpenAI()  # reads OPENAI_API_KEY from the environment
+        return getattr(self._client, name)
+
+
+client = _LazyOpenAIClient()
 
 def segment(scrape: str) -> dict:
     summary = summarize_scrape(scrape)
@@ -107,6 +124,8 @@ def summarize_scrape(scrape: str) -> str:
     global assistant_tokens_usage
     global assistant_prompt_count
     logging.info('Summarizing scrape with OpenAI...')
+    if not WEB_SCRAPE_SUMMARIZER_ASSISTANT_ID:
+        return summarize_scrape_with_chat(scrape)
     with open('output.txt', 'w') as file:
         file.write(scrape)
         file.close()
@@ -158,6 +177,24 @@ def summarize_scrape(scrape: str) -> str:
     logging.info('Summary completed:')
     logging.info(summary)
 
+    return summary
+
+def summarize_scrape_with_chat(scrape: str) -> str:
+    """Fallback summarizer for when no Assistant ID is configured."""
+    global chat_tokens_usage
+    global chat_prompt_count
+    logging.info('No summarizer assistant configured, using ' + MODEL + ' chat completion...')
+    completion = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {'role': 'system', 'content': WEB_SCRAPE_SUMMARIZER_SYS_PROMPT},
+            {'role': 'user', 'content': scrape[:FALLBACK_CHAR_LIMIT]}
+        ]
+    )
+    summary = completion.choices[0].message.content or ''
+    chat_tokens_usage += completion.usage.total_tokens
+    chat_prompt_count += 1
+    logging.info('Summary completed via chat completion')
     return summary
 
 def identify_variables(summary: str) -> dict:

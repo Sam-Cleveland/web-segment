@@ -20,7 +20,7 @@ except ModuleNotFoundError:
     from site_scraper import KEYWORDS
 
 
-def main(url, accountId, use_pagespeed=True, use_openai=True, openai_model='gpt-3.5-turbo', save_output=False, send_to_zoho=True):
+def main(url, accountId, use_pagespeed=True, use_openai=True, openai_model='gpt-3.5-turbo', save_output=False, send_to_zoho=True, deep=True):
     # Initialize output object
     site_scrape_data = {
         'status': 'success',
@@ -55,7 +55,7 @@ def main(url, accountId, use_pagespeed=True, use_openai=True, openai_model='gpt-
         # Scrape text from web pages
         logging.info('Scraping ' + url + ' ...')
         # Site scrape keys: mainPageText, hasSitemap, lastModified, pages, HTTPS
-        site_scrape = site_scraper.scrape_site(url, True)
+        site_scrape = site_scraper.scrape_site(url, deep)
         logging.info('Scraped ' + url)
 
         # Add manually found segmentation variables to output object
@@ -144,11 +144,14 @@ def main(url, accountId, use_pagespeed=True, use_openai=True, openai_model='gpt-
         logging.error(traceback.format_exc())
         site_scrape_data['error'] = str(e)
     
-    if send_to_zoho:
-        # Send output to Zoho
+    # Export to a CRM. ZOHO_API_URL points at a Zoho CRM function endpoint, but any
+    # endpoint that accepts the JSON payload below will work.
+    zoho_api_url = os.environ.get('ZOHO_API_URL')
+    if send_to_zoho and not zoho_api_url:
+        logging.warning('ZOHO_API_URL is not set, skipping CRM export')
+    elif send_to_zoho:
         logging.info('Sending output to Zoho...')
-        ZOHO_API_URL = 'https://www.zohoapis.com/crm/v2/functions/url_scrape_results/actions/execute?auth_type=apikey&zapikey=REDACTED_ZOHO_KEY'
-        response = requests.post(ZOHO_API_URL, json=site_scrape_data)
+        response = requests.post(zoho_api_url, json=site_scrape_data)
         logging.info('POST ' + response.url)
         logging.info('Sent output to Zoho:')
     logging.info(json.dumps(site_scrape_data, indent=2))
@@ -163,9 +166,10 @@ if __name__ == '__main__':
     url = sys.argv[1]
     deep = not (sys.argv[2].lower() == 'basic') if len(sys.argv) > 2 else True
     
-    site_scrape = main(url, None, deep)
+    site_scrape = main(url, None, deep=deep)
     
     # Write output to file
+    os.makedirs('output', exist_ok=True)
     filename = 'output/' + urlsplit(site_scrape['url']).netloc + '.json'
 
     with open(filename, 'w') as f:

@@ -164,3 +164,4 @@ logs/
 .DS_Store
 output.json
 output/
+output.txt

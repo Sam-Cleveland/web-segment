@@ -13,10 +13,14 @@ except ModuleNotFoundError:
 
 app = Flask(__name__)
 
-API_KEY = 'REDACTED_WEBHOOK_KEY'
+API_KEY = os.environ.get('WEBHOOK_API_KEY')
 
 @app.route('/scrape_site', methods=['POST'])
 def webhook():
+    # Fail closed: refuse to serve requests when no key is configured
+    if not API_KEY:
+        logging.error('WEBHOOK_API_KEY is not set, refusing request')
+        return 'Server API key not configured', 500
     # Check if API key is valid
     api_key = request.headers.get('Authorization')
     if not api_key or api_key != API_KEY:
